@@ -175,20 +175,31 @@ void CPercentPrinter::Print()
 if (_printedString != _s)
 {
 #ifdef ANDROID_PROGRESS_MODE
-  UInt64 percent = 0;
-  if (Total != 0 && Total != (UInt64)(Int64)-1)
-      percent = Completed * 100 / Total;
-  printf("PROGRESS:%llu\n", (unsigned long long)percent);
-  fflush(stdout);
-#else
-  ClosePrint(false);
-  *_so << _s;
-  if (NeedFlush)
-    _so->Flush();
-#endif
-  _printedString = _s;
-}
+    UInt64 percent = 0;
+    if (Total != 0 && Total != (UInt64)(Int64)-1)
+        percent = Completed * 100 / Total;
 
+    if (!FileName.IsEmpty())
+    {
+        // 将 UString 转成 char*
+        _so->Convert_UString_to_AString(FileName, _temp);
+        printf("进度:%llu %s\n", (unsigned long long)percent, _temp);
+    }
+    else
+    {
+        printf("进度:%llu\n", (unsigned long long)percent);
+    }
+
+    fflush(stdout);
+#else
+    ClosePrint(false);
+    *_so << _s;
+    if (NeedFlush)
+        _so->Flush();
+#endif
+
+    _printedString = _s;
+}
   _printedState = *this;
 
   if (_tickStep != 0)
