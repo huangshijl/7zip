@@ -90,21 +90,6 @@ void CPercentPrinter::GetPercents()
 
 void CPercentPrinter::Print()
 {
-
-  #ifdef ANDROID_PROGRESS_MODE
-
-    UInt64 percent = 0;
-
-    if (Total != 0 && Total != (UInt64)(Int64)-1)
-        percent = Completed * 100 / Total;
-
-    printf("PROGRESS:%llu\n", (unsigned long long)percent);
-    fflush(stdout);
-    return;
-
-  #endif
-
-
   if (DisablePrint)
     return;
   DWORD tick = 0;
@@ -187,14 +172,22 @@ void CPercentPrinter::Print()
     _s += _temp;
   }
   
-  if (_printedString != _s)
-  {
-    ClosePrint(false);
-    *_so << _s;
-    if (NeedFlush)
-      _so->Flush();
-    _printedString = _s;
-  }
+if (_printedString != _s)
+{
+#ifdef ANDROID_PROGRESS_MODE
+  UInt64 percent = 0;
+  if (Total != 0 && Total != (UInt64)(Int64)-1)
+      percent = Completed * 100 / Total;
+  printf("PROGRESS:%llu\n", (unsigned long long)percent);
+  fflush(stdout);
+#else
+  ClosePrint(false);
+  *_so << _s;
+  if (NeedFlush)
+    _so->Flush();
+#endif
+  _printedString = _s;
+}
 
   _printedState = *this;
 
