@@ -1,0 +1,81 @@
+name: Build Android 7zz (API29)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - shi   # 只在 shi 分支触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [arm64-v8a, x86_64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Android SDK + NDK r29
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK r29
+        run: |
+          sdkmanager "ndk;29.0.13113456"
+          echo "NDK=$ANDROID_SDK_ROOT/ndk/29.0.13113456" >> $GITHUB_ENV
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Build
+        run: |
+          export API=29
+
+          if [ "${{ matrix.arch }}" = "arm64-v8a" ]; then
+            TARGET=aarch64-linux-android
+          else
+            TARGET=x86_64-linux-android
+          fi
+          
+          TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+          CC=$TOOLCHAIN/bin/${TARGET}${API}-clang
+          CXX=$TOOLCHAIN/bin/${TARGET}${API}-clang++
+          
+          CFLAGS="-O2 -fPIE -DNDEBUG -DANDROID_PROGRESS_MODE"
+          CXXFLAGS="-O2 -fPIE -DNDEBUG -DANDROID_PROGRESS_MODE"
+          LDFLAGS="-static-libstdc++ -fPIE -pie -Wl,--gc-sections"
+          
+          # 清理警告限制
+          sed -i 's/-Weverything//g' CPP/7zip/7zip_gcc.mak
+          sed -i 's/-Werror//g' CPP/7zip/7zip_gcc.mak
+          sed -i 's/-Wfatal-errors//g' CPP/7zip/7zip_gcc.mak
+          sed -i 's/-Weverything//g' CPP/7zip/cmpl_clang.mak
+          sed -i 's/-Werror//g' CPP/7zip/cmpl_clang.mak
+          sed -i 's/-Wfatal-errors//g' CPP/7zip/cmpl_clang.mak
+          sed -i 's/-lpthread//g' CPP/7zip/7zip_gcc.mak
+          sed -i 's/-lpthread//g' CPP/7zip/cmpl_clang.mak
+          
+          cd CPP/7zip/Bundles/Alone2
+          mkdir -p b/c
+          
+          make -j2 -f ../../cmpl_clang.mak \
+            CC="$CC $CFLAGS" \
+            CXX="$CXX $CXXFLAGS" \
+            LDFLAGS="$LDFLAGS" \
+            DISABLE_RAR=1
+          
+          $TOOLCHAIN/bin/llvm-strip b/c/7zz
+
+      - name: Rename
+        run: |
+          if [ "${{ matrix.arch }}" = "arm64-v8a" ]; then
+            mv CPP/7zip/Bundles/Alone2/b/c/7zz 7zz-arm64
+          else
+            mv CPP/7zip/Bundles/Alone2/b/c/7zz 7zz-x86_64
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 7zz-${{ matrix.arch }}
+          path: 7zz-*
