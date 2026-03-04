@@ -6,6 +6,8 @@
 
 #include "PercentPrinter.h"
 
+#include <stdio.h>
+
 static const unsigned kPercentsSize = 4;
 
 CPercentPrinter::~CPercentPrinter()
@@ -88,6 +90,21 @@ void CPercentPrinter::GetPercents()
 
 void CPercentPrinter::Print()
 {
+
+  #ifdef ANDROID_PROGRESS_MODE
+
+    UInt64 percent = 0;
+
+    if (Total != 0 && Total != (UInt64)(Int64)-1)
+        percent = Completed * 100 / Total;
+
+    printf("PROGRESS:%llu\n", (unsigned long long)percent);
+    fflush(stdout);
+    return;
+
+  #endif
+
+
   if (DisablePrint)
     return;
   DWORD tick = 0;
