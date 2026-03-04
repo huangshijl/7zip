@@ -181,9 +181,9 @@ if (_printedString != _s)
 
     if (!FileName.IsEmpty())
     {
-        // 将 UString 转成 char*
+        // 将 UString 转成 AString，再用 c_str() 获取 char*，支持中文路径
         _so->Convert_UString_to_AString(FileName, _temp);
-        printf("进度:%llu %s\n", (unsigned long long)percent, _temp);
+        printf("进度:%llu %s\n", (unsigned long long)percent, _temp.c_str());
     }
     else
     {
