@@ -28,6 +28,11 @@ jobs:
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y build-essential
 
+      - name: Clean previous build
+        run: |
+          cd CPP/7zip/Bundles/Alone2
+          rm -rf b/c/*
+
       - name: Build
         run: |
           export API=29
@@ -57,9 +62,9 @@ jobs:
           sed -i 's/-lpthread//g' CPP/7zip/cmpl_clang.mak
           
           cd CPP/7zip/Bundles/Alone2
-          mkdir -p b/c
           
-          make -j2 -f ../../cmpl_clang.mak \
+          # 强制全部重新编译
+          make -B -j2 -f ../../cmpl_clang.mak \
             CC="$CC $CFLAGS" \
             CXX="$CXX $CXXFLAGS" \
             LDFLAGS="$LDFLAGS" \
