@@ -4,6 +4,8 @@
 
 #include "../../../Common/MyWindows.h"
 
+#include <unistd.h>
+
 #ifdef _WIN32
 
 #ifndef Z7_OLD_WIN_SDK
@@ -813,6 +815,9 @@ int Main2(
   #endif
 )
 {
+  printf("isatty=%d\n", isatty(1));
+  fflush(stdout);
+
   #if defined(MY_CPU_SIZEOF_POINTER)
     { unsigned k = sizeof(void *); if (k != MY_CPU_SIZEOF_POINTER) throw "incorrect MY_CPU_PTR_SIZE"; }
   #endif
